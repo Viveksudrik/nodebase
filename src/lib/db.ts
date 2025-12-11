@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 // Default to the standard (binary/library) engine; avoid the "client" engine
 // that requires an adapter/accelerateUrl. This helps if an env var like
