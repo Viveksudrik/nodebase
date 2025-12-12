@@ -12,10 +12,5 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  datasources: {
-    db: {
-      provider: "postgresql",
-      url: env<Env>("DATABASE_URL"),
-    },
-  },
+
 });
