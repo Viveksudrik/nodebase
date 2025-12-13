@@ -1,11 +1,24 @@
-
+"use client";
 import { requireAuth } from "@/lib/auth-utils";
-import { caller } from "@/trpc/server";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { LogoutButton } from "./logout";
-const Page = async () => {
-  await requireAuth();
+import { toast } from "sonner";
+const Page = () => {
 
-  const data = await caller.getUsers();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const { data } = useQuery(trpc.getWorkflows.queryOptions());
+
+  const create = useMutation(trpc.createWorkflow.mutationOptions({
+    onSuccess: () => {
+      toast.success("Job queued");
+
+    }
+  }));
   return (
     <div className="min-h-screen flex items-center 
      justify-center">
@@ -13,10 +26,12 @@ const Page = async () => {
       <div>
         {JSON.stringify(data)}
       </div>
+      <Button disabled={create.isPending} onClick={() => create.mutate()}>
+        Create Workflow
+      </Button>
       <LogoutButton />
     </div>
   );
 };
 
 export default Page;
-  
