@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { authClient } from "@/lib/auth-client";
+import { useHasActiveSubscription } from "@/features/subscriptions/hooks/use-subscription";
 
 const MenuItems = [
     {
@@ -55,6 +56,7 @@ const MenuItems = [
 export const AppSidebar = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const { hasActiveSubscription, isLoading } = useHasActiveSubscription();
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
@@ -72,43 +74,47 @@ export const AppSidebar = () => {
                     <SidebarGroup key={group.title}>
                         <SidebarGroupContent>
                             <SidebarMenu>
-                            {group.items.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        tooltip={item.title}
-                                        isActive={
-                                            item.url === "/"
-                                                ? pathname === "/"
-                                                : pathname.startsWith(item.url)
-                                        }
-                                        asChild
-                                        className="gap-x-4 h-10 px-4"
-                                    >
-                                        <Link href={item.url} prefetch>
-                                            <item.icon className="size-4" />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
+                                {group.items.map((item) => (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton
+                                            tooltip={item.title}
+                                            isActive={
+                                                item.url === "/"
+                                                    ? pathname === "/"
+                                                    : pathname.startsWith(item.url)
+                                            }
+                                            asChild
+                                            className="gap-x-4 h-10 px-4"
+                                        >
+                                            <Link href={item.url} prefetch>
+                                                <item.icon className="size-4" />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
                             </SidebarMenu>
                         </SidebarGroupContent>
                     </SidebarGroup>
                 ))}
             </SidebarContent>
             <SidebarFooter>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        tooltip="Upgrade to Pro"
-                        className="gap-x-4 h-10 px-4"
-                        onClick={() => {
-
-                        }}
-                    >
-                        <StarIcon className="size-4" />
-                        <span>Upgrade to Pro</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        {!hasActiveSubscription && !isLoading && (
+                            <SidebarMenuButton
+                                tooltip="Upgrade to Pro"
+                                className="gap-x-4 h-10 px-4"
+                                onClick={() => authClient.checkout({
+                                    slug: "Nodebase-Pro"
+                                })}
+                            >
+                                <StarIcon className="size-4" />
+                                <span>Upgrade to Pro</span>
+                            </SidebarMenuButton>
+                        )}
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton
                         tooltip="Billing Portal "
@@ -128,7 +134,7 @@ export const AppSidebar = () => {
                         onClick={() => {
                             authClient.signOut({
                                 fetchOptions: {
-                                    onSuccess:()=>{
+                                    onSuccess: () => {
                                         router.push("/login")
                                     }
                                 }
