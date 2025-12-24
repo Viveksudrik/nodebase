@@ -1,13 +1,13 @@
 // Prisma schema for the application database
 
 generator client {
-  provider = "prisma-client-js"
-  // optional custom output — keep if you need it:
-  // output   = "../src/generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
