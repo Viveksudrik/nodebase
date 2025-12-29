@@ -4,6 +4,6 @@ import { prefetch, trpc } from "@/trpc/server";
 /**
  * Prefetch workflows
  */
-export const prefetchWorkflows = () => {
-    prefetch(trpc.workflows.getMany.queryOptions());
+export const prefetchWorkflows = (params: Parameters<typeof trpc.workflows.getMany.queryOptions>[0]) => {
+    prefetch(trpc.workflows.getMany.queryOptions(params));
 };
