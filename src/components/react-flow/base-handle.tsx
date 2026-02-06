@@ -5,6 +5,15 @@ import { cn } from "@/lib/utils";
 
 export type BaseHandleProps = HandleProps;
 
+/**
+ * Render a styled wrapper around the `Handle` component with baseline sizing and theme-aware classes.
+ *
+ * Forwards all received props to the underlying `Handle` and merges `className` with the default styling.
+ *
+ * @param className - Additional CSS class names to merge with the component's default classes
+ * @param children - Elements to render inside the `Handle`
+ * @returns The rendered `Handle` element with applied styling and forwarded props
+ */
 export function BaseHandle({
   className,
   children,
