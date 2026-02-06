@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useWorkflowParams } from "../hooks/use-workflows-params";
 
 import { toast } from "sonner";
-export const useSuspenseWorkflows = () => {
+export const useSuspenseWorkflows  = () => {
     const trpc = useTRPC();
     const [params] = useWorkflowParams();
     return useSuspenseQuery(trpc.workflows.getMany.queryOptions(params));
@@ -84,6 +84,30 @@ export const useUpdateWorkflowName = () => {
         },
         onError: (error) => {
             toast.error(`Failed to update workflow ${error.message}`);
+        },
+    });
+};
+
+/**
+ * Hook to update a workflow
+ */
+
+export const useUpdateWorkflow = () => {
+    const trpc = useTRPC();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        ...trpc.workflows.update.mutationOptions(),
+        onSuccess: (data) => {
+            toast.success(`Workflow "${data.name}" saved successfully`);
+            queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions({})
+            );
+            queryClient.invalidateQueries(
+                trpc.workflows.getOne.queryFilter({ id: data.id }),
+            );
+        },
+        onError: (error) => {
+            toast.error(`Failed to save workflow ${error.message}`);
         },
     });
 };
