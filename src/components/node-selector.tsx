@@ -58,6 +58,20 @@ interface NodeSelectorProps {
     children: React.ReactNode;
 }
 
+/**
+ * Renders a right-side sheet that lets the user insert predefined workflow nodes into the React Flow canvas.
+ *
+ * The sheet displays trigger and execution node options. Selecting an option:
+ * - adds a new node with a generated id, label, description, and a position computed near the viewport center;
+ * - prevents adding a second manual trigger by showing an error toast if one already exists;
+ * - replaces the entire node set when an `INITIAL` trigger already exists, otherwise appends the new node;
+ * - closes the sheet after selection.
+ *
+ * @param open - Whether the sheet is open
+ * @param onOpenChange - Callback invoked when the sheet open state should change
+ * @param children - Trigger element(s) used to open the sheet
+ * @returns The NodeSelector React element
+ */
 export function NodeSelector({
     open,
     onOpenChange,
@@ -176,4 +190,3 @@ export function NodeSelector({
         </Sheet>
     );
 }
-
