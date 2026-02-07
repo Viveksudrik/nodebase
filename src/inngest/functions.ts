@@ -1,69 +1,64 @@
 import { inngest } from "@/inngest/client";
-import { db as prisma } from "@/lib/db";
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { NonRetriableError } from "inngest";
+import { prisma } from "@/lib/db";
+import { topologicalSort } from "./utils";
+import type { Node, Connection, XYPosition } from "@xyflow/react";
+import { getExecutor } from "@/features/executions/lib/executor-registry";
+import { NodeType } from "@prisma/client";
 
-const google = createGoogleGenerativeAI();
-const openai = createOpenAI();
-const anthropic = createAnthropic();
-
-export const execute = inngest.createFunction(
-    { id: "execute-ai" },
-    { event: "execute/ai" },
+export const executeWorkflow = inngest.createFunction(
+    { id: "execute-workflow" },
+    { event: "workflows/execute.workflow" },
     async ({ event, step }) => {
-        await step.sleep("prtend", "5s");
+        const workflowId = event.data.workflowId;
 
-        console.warn("Something is missing")
-        console.error("This is an error i want to track");
+        if (!workflowId) {
+            throw new NonRetriableError("Workflow ID is missing");
+        }
+        const sortedNodes = await step.run("prepare-workflow", async () => {
+            const workflow = await prisma.workflow.findUniqueOrThrow({
+                where: { id: workflowId },
+                include: {
+                    nodes: true,
+                    connections: true,
+                },
+            });
 
-        const { steps: geminiSteps } = await step.ai.wrap(
-            "gemini-generate-text",
-            generateText,
-            {
-                model: google("gemini-2.5-flash"),
-                system: "you are a helpful assistant",
-                prompt: "what is 2+2?",
-                experimental_telemetry: {
-                    isEnabled: true,
-                    recordInputs: true,
-                    recordOutputs: true,
-                },
-            }
-        );
-        const { steps: openaiSteps } = await step.ai.wrap(
-            "openai-generate-text",
-            generateText,
-            {
-                model: openai("gpt-4o"),
-                system: "you are a helpful assistant",
-                prompt: "what is 2+2?",
-                experimental_telemetry: {
-                    isEnabled: true,
-                    recordInputs: true,
-                    recordOutputs: true,
-                },
-            }
-        );
-        const { steps: anthropicSteps } = await step.ai.wrap(
-            "anthropic-generate-text",
-            generateText,
-            {
-                model: anthropic("claude-3-5-sonnet"),
-                system: "you are a helpful assistant",
-                prompt: "what is 2+2?",
-                experimental_telemetry: {
-                    isEnabled: true,
-                    recordInputs: true,
-                    recordOutputs: true,
-                },
-            }
-        );
+            // Transform Prisma nodes to React Flow nodes
+            const reactFlowNodes: Node[] = workflow.nodes.map((node) => ({
+                id: node.id,
+                type: node.type,
+                position: node.position as XYPosition,
+                data: node.data as Record<string, unknown>,
+            }));
+
+            // Transform Prisma connections to React Flow connections
+            const reactFlowConnections: Connection[] = workflow.connections.map((conn) => ({
+                source: conn.fromNodeId,
+                target: conn.toNodeId,
+                sourceHandle: conn.fromOutput,
+                targetHandle: conn.toInput,
+            }));
+
+            return topologicalSort(reactFlowNodes, reactFlowConnections);
+        });
+
+        //Initialize the context with any initial data from the trigger
+        let context = event.data.initialData || {};
+
+        //Execute each node
+        for (const node of sortedNodes) {
+            const executor = getExecutor(node.type as NodeType);
+            context = await executor({
+                data: node.data as Record<string, unknown>,
+                nodeId: node.id,
+                context,
+                step,  
+            });
+        }
         return {
-            geminiSteps,
-            openaiSteps,
-            anthropicSteps,
+            workflowId,
+            result:context,
         };
     },
 );
