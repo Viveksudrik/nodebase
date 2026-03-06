@@ -5,11 +5,18 @@ import { topologicalSort } from "./utils";
 import type { Node, Connection, XYPosition } from "@xyflow/react";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
 import { NodeType } from "@prisma/client";
+import { httpRequestChannel } from "./channels/http-request";
+import { manualTriggerChannel } from "./channels/manual-trigger";
 
 export const executeWorkflow = inngest.createFunction(
     { id: "execute-workflow" },
-    { event: "workflows/execute.workflow" },
-    async ({ event, step }) => {
+    { event: "workflows/execute.workflow",
+        channels: [
+             httpRequestChannel(),
+             manualTriggerChannel(),
+        ],
+     },
+    async ({ event, step, publish }) => {
         const workflowId = event.data.workflowId;
 
         if (!workflowId) {
@@ -53,7 +60,8 @@ export const executeWorkflow = inngest.createFunction(
                 data: node.data as Record<string, unknown>,
                 nodeId: node.id,
                 context,
-                step,  
+                step, 
+                publish, 
             });
         }
         return {
