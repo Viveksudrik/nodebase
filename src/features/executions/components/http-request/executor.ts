@@ -63,6 +63,10 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         const endpoint = handlebars.compile(data.endpoint)(context);
         const method = data.method;
 
+        if (!endpoint || endpoint.trim() === "") {
+             throw new NonRetriableError("HTTP Request node: Resolved endpoint is empty or invalid after parsing template");
+        }
+
         const options: KyOptions = { method };
 
         if (["POST", "PUT", "PATCH"].includes(method)) {
@@ -75,6 +79,9 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
             };
         }
 
+        console.log("ENDPOINT URL:", endpoint);
+        console.log("OPTIONS:", options);
+        
         const response = await ky(endpoint, options);
         let responseData;
         try {
