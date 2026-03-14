@@ -76,7 +76,12 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         }
 
         const response = await ky(endpoint, options);
-        const responseData = await response.json().catch(() => response.text());
+        let responseData;
+        try {
+            responseData = await response.clone().json();
+        } catch {
+            responseData = await response.text();
+        }
 
         const responsePayload = {
             httpResponse: {

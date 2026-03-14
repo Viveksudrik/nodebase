@@ -3,28 +3,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { z } from "zod";
 
-const formSchema = z.object({
-    variableName: z
-    .string()
-    .min(1, {message: "Variable name is required"})
-    .regex(/^[a-zA-Z_$][a-zA-Z0-9_]*$/, 
-        {message: "Variable name must start with a letter or underscore and contain only letters, numbers, and underscores"}),
-    endpoint: z.url({ message: "Please enter a valid URL" }),
-    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
-    body: z
-        .string()
-        .optional()
-    // .refine(),
-});
-export type HttpRequestFormValues = z.infer<typeof formSchema>;
-
-interface Props {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSubmit: (values: HttpRequestFormValues) => void;
-    defaultValues?: Partial<HttpRequestFormValues>;
-}
-
 import {
     Form,
     FormControl,
@@ -43,6 +21,34 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 
+const formSchema = z.object({
+    variableName: z
+    .string()
+    .min(1, {message: "Variable name is required"})
+    .regex(/^[a-zA-Z_$][a-zA-Z0-9_]*$/, 
+        {message: "Variable name must start with a letter or underscore and contain only letters, numbers, and underscores"}),
+    endpoint: z.string().min(1, { message: "Endpoint URL is required" }).refine((val) => {
+        try {
+            new URL(val);
+            return true;
+        } catch {
+            return val.includes("{{") && val.includes("}}");
+        }
+    }, { message: "Please enter a valid URL or a template variable" }),
+    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+    body: z
+        .string()
+        .optional()
+    // .refine(),
+});
+export type HttpRequestFormValues = z.infer<typeof formSchema>;
+
+interface Props {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSubmit: (values: HttpRequestFormValues) => void;
+    defaultValues?: Partial<HttpRequestFormValues>;
+}
 export const HttpRequestDialog =
     ({
         open,
