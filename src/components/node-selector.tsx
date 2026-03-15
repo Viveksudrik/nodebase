@@ -62,6 +62,24 @@ const executionNodes: NodeTypeOption[] = [
         description: "Trigger the workflow via HTTP request",
         icon: GlobeIcon,
     },
+    {
+        type: NodeType.GEMINI,
+        label: "Gemini",
+        description: "Uses Google Gemini to generate text",
+        icon: '/logos/gemini.svg',
+    },
+    {
+        type: NodeType.OPENAI,
+        label: "OpenAI",
+        description: "Uses OpenAI to generate text",
+        icon: '/logos/openai.svg',
+    },
+    {
+        type: NodeType.ANTHROPIC,
+        label: "Anthropic",
+        description: "Uses Anthropic Claude to generate text",
+        icon: '/logos/anthropic.svg',
+    }
 ];
 
 interface NodeSelectorProps {
